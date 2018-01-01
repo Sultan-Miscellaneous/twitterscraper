@@ -21,14 +21,14 @@ def postRandomTweets():
         api.PostUpdate('Random Tweet number: ' + str(i))
     return
 
-def listenForNewTweetsFrom(user):
+def listenForNewTweetsFrom(user, updateFrequency):
 
     while True:
         print("Checking for new tweets from " + user)
 
-        for i in range(10):
+        for i in range(updateFrequency):
             time.sleep(1)
-            progress(i+1,10)
+            progress(i+1,updateFrequency)
 
         currentTweetCount = getCurrentTweetCountOf(user)
         savedTweetCount = getSavedTweetCountOf(user)
@@ -114,8 +114,22 @@ def updateSavedTweetCountOf(user, count):
         '$set': {'tweetCount': count}
         }, upsert = True)
 
+def isValidUser(user):
+    try:
+        api.GetUser(screen_name = user)
+        return True
+    except Exception, e:
+        return False
+
 def main():
-    listenForNewTweetsFrom("asymmetricalpha")
+    requestedUser = sys.argv[1]
+    updateFrequency = int(sys.argv[2])
+    print("Validating user: " + requestedUser)
+    if(isValidUser(requestedUser)):
+        print("User valid")
+        listenForNewTweetsFrom(requestedUser, updateFrequency)
+    else: 
+        print("Invalid user requested, re-run script with valid user")
     return
 
 
