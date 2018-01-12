@@ -48,17 +48,17 @@ def listenForNewTweetsFrom(user, updateFrequency):
             updateSavedTweetCountOf(user, currentTweetCount)
 
         elif int(currentTweetCount)<int(savedTweetCount):
-            print("New tweets less than saved, something weird happened.... adding last few tweets while ignoring duplicates")
+            # print("New tweets less than saved, something weird happened.... adding last few tweets while ignoring duplicates")
             logging.info("New tweets less than saved, something weird happened.... adding last few tweets while ignoring duplicates")     
             statuses = getLastTweetsOf(user,200)
             updateSavedTweetCountOf(user, currentTweetCount)
             for eachTweet in statuses:
                 if tweetIsAlreadyInDb(eachTweet):
-                    print(eachTweet.id_str + " is already in db, skipping...")
+                    # print(eachTweet.id_str + " is already in db, skipping...")
                     logging.info(eachTweet.id_str + " is already in db, skipping...")
                     continue
                 else: 
-                    print("adding tweet with id: " + eachTweet.id_str + " to DB")
+                    # print("adding tweet with id: " + eachTweet.id_str + " to DB")
                     logging.info("adding tweet with id: " + eachTweet.id_str + " to DB")
                     populateDBWith([eachTweet],user)
 
@@ -154,7 +154,7 @@ def convertlevel(level_as_string):
     elif level_as_string == "error":
         return logging.ERROR
     else:
-        print("invalid log level specified")
+        # print("invalid log level specified")
         exit()
         return 0
 
