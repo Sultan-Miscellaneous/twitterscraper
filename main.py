@@ -30,7 +30,7 @@ def listenForNewTweetsFrom(user, updateFrequency):
     while True:
         logging.info("Checking for new tweets from " + user)
 
-        print("updating....")
+        # print("updating....")
         for i in range(updateFrequency):
             time.sleep(1)
             progress(i+1,updateFrequency)
@@ -159,6 +159,8 @@ def convertlevel(level_as_string):
         return 0
 
 def main():
+
+    print("Starting script")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("user", help = "Define user to log tweets")
