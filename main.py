@@ -5,6 +5,8 @@ import pymongo
 import os
 import sys
 import time
+import logging
+import argparse
 
 from pymongo import MongoClient
 client = MongoClient("mongodb://admin:password@ds235877.mlab.com:35877/scraperinvestment")
@@ -16,6 +18,8 @@ api = twitter.Api(consumer_key='yxf1KWz3TlFgOZmZ8lmWVslpv',
 tweetsCollection = client.scraperinvestment.tweets
 tweetCounts = client.scraperinvestment.tweetCounts
 
+disableProgressBar = False
+
 def postRandomTweets():
     for i in range(20):
         api.PostUpdate('Random Tweet number: ' + str(i))
@@ -24,7 +28,7 @@ def postRandomTweets():
 def listenForNewTweetsFrom(user, updateFrequency):
 
     while True:
-        print("Checking for new tweets from " + user)
+        logging.info("Checking for new tweets from " + user)
 
         for i in range(updateFrequency):
             time.sleep(1)
@@ -33,14 +37,17 @@ def listenForNewTweetsFrom(user, updateFrequency):
         currentTweetCount = getCurrentTweetCountOf(user)
         savedTweetCount = getSavedTweetCountOf(user)
         
-        print("\nsavedTweetCount: " + str(savedTweetCount))
-        print("currentTweetCount: " + str(currentTweetCount))
+        logging.info("savedTweetCount: " + str(savedTweetCount))
+        logging.info("currentTweetCount: " + str(currentTweetCount))
         
         if int(currentTweetCount)>int(savedTweetCount):
-            print("New tweets posted.... updating database")
+            logging.info("New tweets posted.... updating database")
             statuses = getLastTweetsOf(user,int(currentTweetCount) - int(savedTweetCount))
             populateDBWith(statuses, user)
             updateSavedTweetCountOf(user, currentTweetCount)
+        elif int(currentTweetCount)<int(savedTweetCount):
+            updateSavedTweetCountOf(user, currentTweetCount)
+
 
     return
 
@@ -50,9 +57,9 @@ def progress(count, total, status=''):
 
     percents = round(100.0 * count / float(total), 1)
     bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-    sys.stdout.flush()
+    if(disableProgressBar == False):
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+        sys.stdout.flush()
 
 
 def populateDBWith(statuses, userhandle):
@@ -77,22 +84,22 @@ def populateDBWith(statuses, userhandle):
             })
         currentStatus += 1
 
-    print("\nDb Populated")
+    logging.info("\nDb Populated")
     return
 
 def getLastTweetsOf(user, n):
     if(n>200):
-        print("requested tweet number too big, defaulting to max of 200")
+        logging.info("requested tweet number too big, defaulting to max of 200")
         n = 200
 
-    print("Getting last "+ str(n) + " tweets (and ignoring replies)")
+    logging.info("Getting last "+ str(n) + " tweets (and ignoring replies)")
     statuses = api.GetUserTimeline(
         screen_name = user, 
         count = n, 
         trim_user = True, 
         exclude_replies = True
         )
-    print("Done")
+    logging.info("Done")
     return statuses
 
 def getCurrentTweetCountOf(user):
@@ -118,18 +125,44 @@ def isValidUser(user):
     try:
         api.GetUser(screen_name = user)
         return True
-    except Exception, e:
+    except Exception, e:    
         return False
 
+def convertlevel(level_as_string):
+    if level_as_string == "info":
+        return logging.INFO
+    elif level_as_string == "debug":
+        return logging.DEBUG
+    elif level_as_string == "error":
+        return logging.ERROR
+    else:
+        print("invalid log level specified")
+        exit()
+        return 0
+
 def main():
-    requestedUser = sys.argv[1]
-    updateFrequency = int(sys.argv[2])
-    print("Validating user: " + requestedUser)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("user", help = "Define user to log tweets")
+    parser.add_argument("-f", "--updatefrequency" , help = "Set update frequency (default 10 sec)", default = 10, type = int)
+    parser.add_argument("-nb", "--nobar" , help = "disable timer bar between updates", action = "store_true")
+    parser.add_argument("-l", "--log", help = "log update request", default = "info")
+    args = parser.parse_args()
+    
+    requestedUser = args.user
+    updateFrequency = args.updatefrequency
+
+    global disableProgressBar 
+    disableProgressBar = args.nobar
+
+    logging.basicConfig(filename= requestedUser + "_output.log",level=convertlevel(args.log))
+
     if(isValidUser(requestedUser)):
-        print("User valid")
+        print("user twitter stream now being logged")
+        logging.info("User " + requestedUser + " valid")
         listenForNewTweetsFrom(requestedUser, updateFrequency)
     else: 
-        print("Invalid user requested, re-run script with valid user")
+        print("invalid user " + requestedUser + " specified, please re-run script with valid user")
     return
 
 
