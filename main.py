@@ -164,7 +164,7 @@ def main():
     parser.add_argument("user", help = "Define user to log tweets")
     parser.add_argument("-f", "--updatefrequency" , help = "Set update frequency (default 10 sec)", default = 10, type = int)
     parser.add_argument("-nb", "--nobar" , help = "disable timer bar between updates", action = "store_true")
-    parser.add_argument("-l", "--log", help = "log update request", default = "info")
+    parser.add_argument("-l", "--log", help = "log update request", default = "error")
     args = parser.parse_args()
     
     requestedUser = args.user
