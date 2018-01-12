@@ -178,8 +178,8 @@ def main():
     logging.basicConfig(filename= requestedUser + "_output.log",level=convertlevel(args.log))
 
     if(isValidUser(requestedUser)):
+        logging.critical("User " + requestedUser + " valid") 
         print("user twitter stream now being logged")
-        logging.info("User " + requestedUser + " valid")
         listenForNewTweetsFrom(requestedUser, updateFrequency)
     else: 
         print("invalid user " + requestedUser + " specified, please re-run script with valid user")
