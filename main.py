@@ -30,6 +30,7 @@ def listenForNewTweetsFrom(user, updateFrequency):
     while True:
         logging.info("Checking for new tweets from " + user)
 
+        print("updating....")
         for i in range(updateFrequency):
             time.sleep(1)
             progress(i+1,updateFrequency)
@@ -45,9 +46,24 @@ def listenForNewTweetsFrom(user, updateFrequency):
             statuses = getLastTweetsOf(user,int(currentTweetCount) - int(savedTweetCount))
             populateDBWith(statuses, user)
             updateSavedTweetCountOf(user, currentTweetCount)
-        elif int(currentTweetCount)<int(savedTweetCount):
-            updateSavedTweetCountOf(user, currentTweetCount)
 
+        elif int(currentTweetCount)<int(savedTweetCount):
+            print("New tweets less than saved, something weird happened.... adding last few tweets while ignoring duplicates")
+            logging.info("New tweets less than saved, something weird happened.... adding last few tweets while ignoring duplicates")     
+            statuses = getLastTweetsOf(user,200)
+            updateSavedTweetCountOf(user, currentTweetCount)
+            for eachTweet in statuses:
+                if tweetIsAlreadyInDb(eachTweet):
+                    print(eachTweet.id_str + " is already in db, skipping...")
+                    logging.info(eachTweet.id_str + " is already in db, skipping...")
+                    continue
+                else: 
+                    print("adding tweet with id: " + eachTweet.id_str + " to DB")
+                    logging.info("adding tweet with id: " + eachTweet.id_str + " to DB")
+                    populateDBWith([eachTweet],user)
+
+        else:
+            continue
 
     return
 
@@ -61,6 +77,8 @@ def progress(count, total, status=''):
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
 
+def tweetIsAlreadyInDb(tweet):
+    return tweetsCollection.find_one({'tweetid' : tweet.id_str}) != None
 
 def populateDBWith(statuses, userhandle):
     currentStatus = 1
@@ -163,6 +181,7 @@ def main():
         listenForNewTweetsFrom(requestedUser, updateFrequency)
     else: 
         print("invalid user " + requestedUser + " specified, please re-run script with valid user")
+        logging.error("invalid user " + requestedUser + " specified, please re-run script with valid user")
     return
 
 
