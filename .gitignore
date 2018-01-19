@@ -4,3 +4,4 @@ nohup.out
 *output.log
 .DS_Store
 *.pyc
+modeltest.py

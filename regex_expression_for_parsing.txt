@@ -1,1 +1,1 @@
-^\$(?<tickersymbol>\w+) (?<operation>[A-z \/\. 0-9]*?)(?<expirationdate>[0-9]+[\/\.][0-9]+) \$?(?<strikeprice>[0-9\.]+)(?<type>[PCpc]?) [Aa]?[Tt]? (?<premium>[0-9]*\,?\.?[0-9]+\.?)
+^\$(?P<tickersymbol>\w+) (?P<operation>[A-z \/\. 0-9]*?)(?P<expirationdate>[0-9]+[\/\.][0-9]+) \$?(?P<strikeprice>[0-9\.]+)(?P<type>[PCpc]?) [Aa]?[Tt]? (?P<premium>[0-9]*\,?\.?[0-9]+\.?)
