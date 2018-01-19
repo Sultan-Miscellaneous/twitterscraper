@@ -1,2 +1,4 @@
 /venv
 nohup.out
+*_output.log
+*output.log
