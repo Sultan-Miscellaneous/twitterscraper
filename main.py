@@ -10,7 +10,7 @@ import argparse
 
 from pymongo import MongoClient
 client = MongoClient("mongodb://admin:password@ds235877.mlab.com:35877/scraperinvestment")
-api = twitter.Api(consumer_key='yxf1KWz3TlFgOZmZ8lmWVslpv',
+twitterAPI = twitter.Api(consumer_key='yxf1KWz3TlFgOZmZ8lmWVslpv',
                   consumer_secret='PEv8G8oeTNF7DoeJKeMEcYomHZnYqr7jWLNR66t65MM0TKXoFG',
                   access_token_key='2792504612-L3dFWShNoQTkLczyaSlJWgk4zclTcxFdoZifQNi',
                   access_token_secret='c7FQyj8NeRjFgK5KBusmQoIvFRQyQkMsuwYHHNUMapw6j'
@@ -22,11 +22,10 @@ disableProgressBar = False
 
 def postRandomTweets():
     for i in range(20):
-        api.PostUpdate('Random Tweet number: ' + str(i))
+        twitterAPI.PostUpdate('Random Tweet number: ' + str(i))
     return
 
 def listenForNewTweetsFrom(user, updateFrequency):
-
     while True:
         logging.info("Checking for new tweets from " + user)
 
@@ -35,8 +34,8 @@ def listenForNewTweetsFrom(user, updateFrequency):
             time.sleep(1)
             progress(i+1,updateFrequency)
 
-        currentTweetCount = getCurrentTweetCountOf(user)
-        savedTweetCount = getSavedTweetCountOf(user)
+        currentTweetCount = getCurrentTweetCountOfUser(user)
+        savedTweetCount = getSavedTweetCountOfUser(user)
         
         logging.info("savedTweetCount: " + str(savedTweetCount))
         logging.info("currentTweetCount: " + str(currentTweetCount))
@@ -53,7 +52,7 @@ def listenForNewTweetsFrom(user, updateFrequency):
             statuses = getLastTweetsOf(user,200)
             updateSavedTweetCountOf(user, currentTweetCount)
             for eachTweet in statuses:
-                if tweetIsAlreadyInDb(eachTweet):
+                if isTweetInDB(eachTweet):
                     # print(eachTweet.id_str + " is already in db, skipping...")
                     logging.info(eachTweet.id_str + " is already in db, skipping...")
                     continue
@@ -76,7 +75,7 @@ def progress(count, total, status=''):
         sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
 
-def tweetIsAlreadyInDb(tweet):
+def isTweetInDB(tweet):
     return tweetsCollection.find_one({'tweetid' : tweet.id_str}) != None
 
 def populateDBWith(statuses, userhandle):
@@ -111,7 +110,7 @@ def getLastTweetsOf(user, n):
         n = 200
 
     logging.info("Getting last "+ str(n) + " tweets (and ignoring replies)")
-    statuses = api.GetUserTimeline(
+    statuses = twitterAPI.GetUserTimeline(
         screen_name = user, 
         count = n, 
         trim_user = True, 
@@ -120,10 +119,10 @@ def getLastTweetsOf(user, n):
     logging.info("Done")
     return statuses
 
-def getCurrentTweetCountOf(user):
-    return api.GetUser(screen_name = user).statuses_count
+def getCurrentTweetCountOfUser(user):
+    return twitterAPI.GetUser(screen_name = user).statuses_count
 
-def getSavedTweetCountOf(user):
+def getSavedTweetCountOfUser(user):
     result = tweetCounts.find_one({
         'userhandle': user
         })
@@ -141,17 +140,17 @@ def updateSavedTweetCountOf(user, count):
 
 def isValidUser(user):
     try:
-        api.GetUser(screen_name = user)
+        twitterAPI.GetUser(screen_name = user)
         return True
     except Exception, e:    
         return False
 
-def convertlevel(level_as_string):
-    if level_as_string == "info":
+def parseCovertLevel(covertLevel):
+    if covertLevel == "info":
         return logging.INFO
-    elif level_as_string == "debug":
+    elif covertLevel == "debug":
         return logging.DEBUG
-    elif level_as_string == "error":
+    elif covertLevel == "error":
         return logging.ERROR
     else:
         # print("invalid log level specified")
@@ -175,7 +174,7 @@ def main():
     global disableProgressBar 
     disableProgressBar = args.nobar
 
-    logging.basicConfig(filename= requestedUser + "_output.log",level=convertlevel(args.log))
+    logging.basicConfig(filename= requestedUser + "_output.log",level=parseCovertLevel(args.log))
 
     if(isValidUser(requestedUser)):
         logging.critical("User " + requestedUser + " valid") 
